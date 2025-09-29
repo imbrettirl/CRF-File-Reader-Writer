@@ -28,7 +28,7 @@ records = [
 script_dir = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(script_dir, "sample.crf")
 
-CreditReportWriter.write_file(file_path, records)
+CreditReportWriter.write_file(file_path, records) # saving to script directory
 
 if __name__ == "__main__":
     for record in CreditReportReader.read_file("sample.crf"):

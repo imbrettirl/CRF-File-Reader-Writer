@@ -2,6 +2,10 @@ from dataclasses import dataclass # for easy structuring https://docs.python.org
 from typing import List # imported for readability https://docs.python.org/3/library/typing.html
 
 import struct # transition from plain-text to binary
+import hashlib
+
+Magic_Number = b"CRF"
+Footer = b"CRF_END"
 
 @dataclass
 class Account: # Type of account + Balance of that account
@@ -29,10 +33,12 @@ class CreditReportWriter:
     def write_file(filename: str, records: List[CreditRecord]):
         with open(filename, "wb") as f: # write in binary
 
+            f.write(Magic_Number) # header
             f.write(struct.pack("<I", len(records)))  # number of records
-            
+
             for record in records:
-                CreditReportWriter.write_string(f, record.sin)
+                hashed_sin = hashlib.sha256(record.sin.encode()).hexdigest() # converts sin into bytes, hashes with SHA-256 and then converted to dexadecimal string
+                CreditReportWriter.write_string(f, hashed_sin)
                 CreditReportWriter.write_string(f, record.name)
                 CreditReportWriter.write_string(f, record.address)
                 f.write(struct.pack("<I", record.credit_score))
@@ -40,4 +46,4 @@ class CreditReportWriter:
                 f.write(struct.pack("<I", record.major_flags))
                 for acc in record.accounts:
                     CreditReportWriter.write_string(f, acc.name)
-                    f.write(struct.pack("<i", acc.balance)) # signed 4-byte integer
+                    f.write(struct.pack("<i", acc.balance)) # unsigned integer
