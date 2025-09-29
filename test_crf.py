@@ -1,4 +1,5 @@
 from crf_writer import CreditReportWriter, CreditRecord, Account # access writer
+from crf_reader import CreditReportReader
 
 # sample data 1
 record = CreditRecord(
@@ -12,3 +13,7 @@ record = CreditRecord(
 )
 
 CreditReportWriter.write_file("sample.crf", [record])
+
+if __name__ == "__main__":
+    for record in CreditReportReader.read_file("sample.crf"):
+        print(record)

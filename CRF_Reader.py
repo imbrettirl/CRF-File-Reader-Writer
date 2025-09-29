@@ -1,6 +1,6 @@
-from dataclasses import datalclass # structuring
+from dataclasses import dataclass # structuring
 
-@datalclassclass
+@dataclass
 class CreditRecord:
     sin: str
     name: str
@@ -27,7 +27,3 @@ class CreditReportReader:
                 records.append(CreditRecord(sin, name, address))
 
         return records
-    
-if __name__ == "__main__":
-    for record in CreditReportReader.read_file("sample.crf"):
-        print(record)
