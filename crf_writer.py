@@ -19,7 +19,7 @@ class CreditRecord: # All info on the person and their accounts
 class CreditReportWriter:
     @staticmethod
     def write_file(filename: str, records: List[CreditRecord]):
-        with open(filename, "wb") as f:
+        with open(filename, "wb") as f: # write in binary
             for record in records:
                 f.write(record.sin.encode() + b"\n")
                 f.write(record.name.encode() + b"\n")
