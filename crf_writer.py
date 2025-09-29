@@ -3,6 +3,7 @@ from typing import List # imported for readability https://docs.python.org/3/lib
 
 import struct # transition from plain-text to binary
 import hashlib
+import zlib
 
 Magic_Number = b"CRF"
 Footer = b"CRF_END"
@@ -30,6 +31,19 @@ class CreditReportWriter:
         f.write(encoded) # writes UTF-8 encoded string
 
     @staticmethod
+    def write_record(f, record: CreditRecord):
+            hashed_sin = hashlib.sha256(record.sin.encode()).hexdigest() # converts sin into bytes, hashes with SHA-256 and then converted to dexadecimal string
+            CreditReportWriter.write_string(f, hashed_sin)
+            CreditReportWriter.write_string(f, record.name)
+            CreditReportWriter.write_string(f, record.address)
+            f.write(struct.pack("<I", record.credit_score))
+            f.write(struct.pack("<I", record.account_count))
+            f.write(struct.pack("<I", record.major_flags))
+            for acc in record.accounts:
+                CreditReportWriter.write_string(f, acc.name)
+                f.write(struct.pack("<i", acc.balance)) # unsigned integer
+
+    @staticmethod
     def write_file(filename: str, records: List[CreditRecord]):
         with open(filename, "wb") as f: # write in binary
 
@@ -37,13 +51,9 @@ class CreditReportWriter:
             f.write(struct.pack("<I", len(records)))  # number of records
 
             for record in records:
-                hashed_sin = hashlib.sha256(record.sin.encode()).hexdigest() # converts sin into bytes, hashes with SHA-256 and then converted to dexadecimal string
-                CreditReportWriter.write_string(f, hashed_sin)
-                CreditReportWriter.write_string(f, record.name)
-                CreditReportWriter.write_string(f, record.address)
-                f.write(struct.pack("<I", record.credit_score))
-                f.write(struct.pack("<I", record.account_count))
-                f.write(struct.pack("<I", record.major_flags))
-                for acc in record.accounts:
-                    CreditReportWriter.write_string(f, acc.name)
-                    f.write(struct.pack("<i", acc.balance)) # unsigned integer
+                CreditReportWriter.write_record(f, record)
+
+            footer_data = Footer + struct.pack("<I", len(records))
+            checksum = zlib.crc32(footer_data)
+            f.write(footer_data)
+            f.write(struct.pack("<I", checksum))
