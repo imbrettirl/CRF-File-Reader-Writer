@@ -24,9 +24,9 @@ class CreditReportWriter:
                 f.write(record.sin.encode() + b"\n")
                 f.write(record.name.encode() + b"\n")
                 f.write(record.address.encode() + b"\n")
-                f.write(record.credit_score.encode() + b"\n")
-                f.write(record.account_count.encode() + b"\n")
-                f.write(record.major_flags.encode() + b"\n")
+                f.write(str(record.credit_score).encode() + b"\n")
+                f.write(str(record.account_count).encode() + b"\n")
+                f.write(str(record.major_flags).encode() + b"\n")
                 for acc in record.accounts:
                     f.write(acc.name.encode() + b"\n")
                     f.write(str(acc.balance).encode() + b"\n")
