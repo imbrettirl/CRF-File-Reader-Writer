@@ -5,7 +5,7 @@ import struct
 @dataclass
 class Account:
     name: str
-    balance: str
+    balance: int
 
 @dataclass
 class CreditRecord:
@@ -49,5 +49,5 @@ class CreditReportReader:
                     balance = struct.unpack("<i", f.read(4))[0]
                     accounts.append(Account(acc_name, balance))
 
-                records.append(CreditRecord(sin, name, address, credit_score, account_count, major_flags))
+                records.append(CreditRecord(sin, name, address, credit_score, account_count, major_flags, accounts))
         return records
