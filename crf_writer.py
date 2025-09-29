@@ -28,6 +28,9 @@ class CreditReportWriter:
     @staticmethod
     def write_file(filename: str, records: List[CreditRecord]):
         with open(filename, "wb") as f: # write in binary
+
+            f.write(struct.pack("<I", len(records)))  # number of records
+            
             for record in records:
                 CreditReportWriter.write_string(f, record.sin)
                 CreditReportWriter.write_string(f, record.name)
