@@ -54,6 +54,6 @@ class CreditReportWriter:
                 CreditReportWriter.write_record(f, record)
 
             footer_data = Footer + struct.pack("<I", len(records))
-            checksum = zlib.crc32(footer_data)
+            checksum = zlib.crc32(footer_data) # detect accidental corruption, creates 4-byte footprint of footer data, https://docs.python.org/3/library/zlib.html
             f.write(footer_data)
             f.write(struct.pack("<I", checksum))

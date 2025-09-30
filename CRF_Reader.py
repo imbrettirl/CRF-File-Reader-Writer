@@ -1,6 +1,11 @@
 from dataclasses import dataclass # structuring
 from typing import List
+
 import struct
+import zlib
+
+Magic_Number = b"CRF"
+Footer = b"CRF_END"
 
 @dataclass
 class Account:
@@ -28,12 +33,13 @@ class CreditReportReader:
     
     @staticmethod
     def read_file(filename):
-        records = [] # creates empty list to hold all records
+
         with open(filename, "rb") as f: # opens in read binary mode
-            record_count_bytes = f.read(4) # reads 4 bytes ti get number of records
-            if not record_count_bytes:
-                return records
-            record_count = struct.unpack("<I", record_count_bytes)[0] # convert first 4 bytes into integer
+            if f.read(3) != Magic_Number: # Error handling for non CRF files
+                raise ValueError("Invalid File Format.")
+            
+            record_count = struct.unpack("<I", f.read(4))[0] # convert first 4 bytes into integer
+            records = [] # creates empty list to hold all records
 
             for _ in range(record_count): # loop for each record
                 sin = CreditReportReader.read_string(f)
@@ -49,5 +55,23 @@ class CreditReportReader:
                     balance = struct.unpack("<i", f.read(4))[0]
                     accounts.append(Account(acc_name, balance))
 
-                records.append(CreditRecord(sin, name, address, credit_score, account_count, major_flags, accounts))
+                records.append(CreditRecord(sin, name, address, credit_score, account_count, major_flags, accounts)) # appends all data onto record
+
+            footer = f.read(len(Footer))
+            if footer != Footer: # Error handling for incorrect footer
+                raise ValueError("Invalid Footer.")
+            
+            footer_record_count = struct.unpack("<I", f.read(4))[0]
+            checksum_stored = struct.unpack("<I", f.read(4))[0] # reading CRC32 checksum
+
+            # calculate the checksum
+            f.seek(-len(Footer)-4-4, 2)  # go to footer start
+            footer_data = f.read(len(Footer)+4) # reads footer bytes
+            checksum_calculated = zlib.crc32(footer_data) # calculates CRC32 over footer
+
+            if checksum_calculated != checksum_stored: #validatse footer
+                raise ValueError("Checksum mismatch.")
+            if footer_record_count != record_count:
+                raise ValueError("Record count mismatch.")
+
         return records
