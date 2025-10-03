@@ -5,6 +5,9 @@ import struct # transition from plain-text to binary
 import hashlib
 import zlib
 
+from cryptography.fernet import Fernet # fernet encryption taken from https://cryptography.io/en/latest/fernet/
+import io
+
 Magic_Number = b"CRF"
 Footer = b"CRF_END"
 
@@ -32,7 +35,7 @@ class CreditReportWriter:
 
     @staticmethod
     def write_record(f, record: CreditRecord):
-            hashed_sin = hashlib.sha256(record.sin.encode()).hexdigest() # converts sin into bytes, hashes with SHA-256 and then converted to dexadecimal string
+            hashed_sin = hashlib.sha256(record.sin.encode()).hexdigest() # converts sin into bytes, hashes with SHA-256 and then converted to hexadecimal string
             CreditReportWriter.write_string(f, hashed_sin)
             CreditReportWriter.write_string(f, record.name)
             CreditReportWriter.write_string(f, record.address)
@@ -44,16 +47,28 @@ class CreditReportWriter:
                 f.write(struct.pack("<i", acc.balance)) # unsigned integer
 
     @staticmethod
-    def write_file(filename: str, records: List[CreditRecord]):
-        with open(filename, "wb") as f: # write in binary
+    def write_file(filename: str, records: List[CreditRecord], encryption_key: bytes):
 
-            f.write(Magic_Number) # header
-            f.write(struct.pack("<I", len(records)))  # number of records
+        buffer = io.BytesIO() # collect all data in buffer before encrpyting with fernet
+        
+        buffer.write(Magic_Number)
+        buffer.write(struct.pack("<I", len(records)))
 
-            for record in records:
-                CreditReportWriter.write_record(f, record)
+        for record in records:
+            CreditReportWriter.write_record(buffer, record)
 
-            footer_data = Footer + struct.pack("<I", len(records))
-            checksum = zlib.crc32(footer_data) # detect accidental corruption, creates 4-byte footprint of footer data, https://docs.python.org/3/library/zlib.html
-            f.write(footer_data)
-            f.write(struct.pack("<I", checksum))
+        footer_data = Footer + struct.pack("<I", len(records))
+        checksum = zlib.crc32(footer_data)
+        buffer.write(footer_data)
+        buffer.write(struct.pack("<I", checksum))
+
+        unencrypted_data = buffer.getvalue() # encrypted data is stored with all buffer data
+        fernet = Fernet(encryption_key)
+        encrypted_data = fernet.encrypt(unencrypted_data) # encrypt all the data
+
+        with open(filename, "wb") as f:
+            f.write(encrypted_data) # writes encrypted data
+
+    @staticmethod
+    def generate_key() -> bytes:
+        return Fernet.generate_key() # generates encryption key
