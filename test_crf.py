@@ -98,6 +98,14 @@ if __name__ == "__main__":
     print("="*60)
     
     try:
+        metadata_1 = CreditReportReader.read_metadata(file_path_1, key_1)
+        print(f"\nFile 1 Metadata:")
+        print(f"  Version: {metadata_1.version}")
+        print(f"  Record Count: {metadata_1.record_count}")
+    except Exception as e:    
+        print(f"Error reading metadata: {e}")
+
+    try:
         records_1 = CreditReportReader.read_file(file_path_1, key_1) # call reader
         for i, record in enumerate(records_1, 1): # enumerates records starting at 1
             print(f"\nRecord {i}:") # displays what record is being displyed
@@ -116,6 +124,14 @@ if __name__ == "__main__":
     print("Reading and displaying sample_2.crf:") # divider for sample data 2
     print("="*60)
     
+    try:
+        metadata_2 = CreditReportReader.read_metadata(file_path_2, key_2)
+        print(f"\nFile 2 Metadata:")
+        print(f"  Version: {metadata_2.version}")
+        print(f"  Record Count: {metadata_2.record_count}")
+    except Exception as e:    
+        print(f"Error reading metadata: {e}")
+
     try:
         records_2 = CreditReportReader.read_file(file_path_2, key_2)
         for i, record in enumerate(records_2, 1):

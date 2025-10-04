@@ -25,6 +25,11 @@ class CreditRecord:
     major_flags: int
     accounts: List[Account]
 
+@dataclass
+class FileMetaData:
+    version: int
+    record_count: int
+
 class CreditReportReader:
     @staticmethod
     def read_string(f):
@@ -51,7 +56,13 @@ class CreditReportReader:
         if f.read(3) != Magic_Number: # error handling for non crf files
             raise ValueError("Invalid File Format.")
         
+        version = struct.unpack("<H", f.read(2))[0]
+        if version < 1 or version > 2:
+            raise ValueError(f"Unsupported file version: {version}")
+
         record_count = struct.unpack("<I", f.read(4))[0]
+        index_size = struct.unpack("<I", f.read(4))[0]
+        f.read(index_size)
         records = [] # creates empty list to hold records
 
         for _ in range(record_count):
@@ -87,3 +98,24 @@ class CreditReportReader:
             raise ValueError("Record count mismatch.")
 
         return records
+    
+    @staticmethod
+    def read_metadata(filename: str, encryption_key: bytes) -> FileMetaData:
+        with open(filename, "rb") as file:
+            encrypted_data = file.read()
+
+        try:
+            fernet = Fernet(encryption_key)
+            decrypted_data = fernet.decrypt(encrypted_data)
+        except Exception as e:
+            raise ValueError(f"Decryption failed: {e}")
+        
+        f = io.BytesIO(decrypted_data)
+
+        if f.read(3) != Magic_Number:
+            raise ValueError("Invalid File Format.")
+        
+        version = struct.unpack("<H", f.read(2))[0]
+        record_count = struct.unpack("<I", f.read(4))[0]
+
+        return FileMetaData(version = version, record_count = record_count)
